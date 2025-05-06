@@ -382,8 +382,9 @@ void HashTable<K,V,Prober,Hash,KEqual>::insert(const ItemType& p)
       // must update that it is no longer deleted
       table_[location]->item = p;
       table_[location]->deleted = false;
+      // decrement counts
       n_++;
-      deletedNum_++;
+      deletedNum_--;
     }
     else if(table_[location]-> deleted == false){
       // there exists a item but it is not deleted
@@ -406,12 +407,13 @@ void HashTable<K,V,Prober,Hash,KEqual>::remove(const KeyType& key)
   HashItem* desiredKey = internalFind(key);
 
   // check if it has already been deleted
-  if(desiredKey->deleted == false && desiredKey != nullptr){
-    n_ --;
-    deletedNum_++;
-    desiredKey->deleted = true;
+  if(desiredKey != nullptr ){
+    if(desiredKey->deleted == false){
+      n_ --;
+      deletedNum_++;
+      desiredKey->deleted = true;
+    }
   }
-
 }
 
 
@@ -490,10 +492,6 @@ void HashTable<K,V,Prober,Hash,KEqual>::resize()
     throw std::logic_error("No more capacity");
   }
 
-  // reset variables
-  deletedNum_ = 0;
-  n_ = 0;
-
   // store information about the old table before deleting it
   size_t oldTableSize = table_.size();
   std::vector<HashItem*> oldTable = table_;
@@ -502,20 +500,26 @@ void HashTable<K,V,Prober,Hash,KEqual>::resize()
   mIndex_++;
   HASH_INDEX_T updatedSize = CAPACITIES[mIndex_];
   table_.clear();
-  table_.clear();
   table_.resize(updatedSize, nullptr);
+
+  // reset variables
+  deletedNum_ = 0;
+  n_ = 0;
 
   // rehash - make sure to check if it is a non-deleted item
   for(size_t i = 0; i < oldTableSize; i++){
-    if(oldTable[i]->deleted == false && oldTable[i] != nullptr){
-      insert(oldTable[i]->item);
-      delete oldTable[i];
+
+    if(oldTable[i] != nullptr){
+      if(oldTable[i]->deleted == false){
+        insert(oldTable[i]->item);
+      }
+      else if(oldTable[i]->deleted == true){
+        delete oldTable[i];
+      }
     }
-    else if(oldTable[i]->deleted == true && oldTable[i] != nullptr){
-      delete oldTable[i];
-    }
-  } 
-}
+  }
+} 
+
 
 // Almost complete
 template<typename K, typename V, typename Prober, typename Hash, typename KEqual>
@@ -533,7 +537,7 @@ HASH_INDEX_T HashTable<K,V,Prober,Hash,KEqual>::probe(const KeyType& key) const
         }
         // fill in the condition for this else if statement which should 
         // return 'loc' if the given key exists at this location
-        else if(kequal_(table_[loc]->item.first, key) && table_[loc]->deleted == false) {
+        else if(kequal_(table_[loc]->item.first, key)) {
             return loc;
         }
         loc = prober_.next();
