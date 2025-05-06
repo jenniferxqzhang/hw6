@@ -328,7 +328,6 @@ HashTable<K,V,Prober,Hash,KEqual>::~HashTable()
     }
   }
   table_.clear();
-
 }
 
 // To be completed
@@ -386,7 +385,7 @@ void HashTable<K,V,Prober,Hash,KEqual>::insert(const ItemType& p)
       n_++;
       deletedNum_--;
     }
-    else if(table_[location]-> deleted == false){
+    else{
       // there exists a item but it is not deleted
       // simply update the existing value
       table_[location]->item.second = p.second;
@@ -404,15 +403,14 @@ void HashTable<K,V,Prober,Hash,KEqual>::remove(const KeyType& key)
 {
 
   // can use internal find function that is already completed
-  HashItem* desiredKey = internalFind(key);
+  HASH_INDEX_T location = probe(key);
 
   // check if it has already been deleted
-  if(desiredKey != nullptr ){
-    if(desiredKey->deleted == false){
+  if(location != npos && table_[location] != nullptr && !table_[location]->deleted && kequal_(table_[location]->item.first,key) ){
       n_ --;
       deletedNum_++;
-      desiredKey->deleted = true;
-    }
+      table_[location]->deleted = true;
+
   }
 }
 
@@ -513,9 +511,7 @@ void HashTable<K,V,Prober,Hash,KEqual>::resize()
       if(oldTable[i]->deleted == false){
         insert(oldTable[i]->item);
       }
-      else if(oldTable[i]->deleted == true){
-        delete oldTable[i];
-      }
+      delete oldTable[i];
     }
   }
 } 
@@ -537,7 +533,7 @@ HASH_INDEX_T HashTable<K,V,Prober,Hash,KEqual>::probe(const KeyType& key) const
         }
         // fill in the condition for this else if statement which should 
         // return 'loc' if the given key exists at this location
-        else if(kequal_(table_[loc]->item.first, key)) {
+        else if(table_[loc] != nullptr && table_[loc]->deleted == false && kequal_(table_[loc]->item.first, key)) {
             return loc;
         }
         loc = prober_.next();
