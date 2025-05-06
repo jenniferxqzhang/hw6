@@ -486,7 +486,7 @@ template<typename K, typename V, typename Prober, typename Hash, typename KEqual
 void HashTable<K,V,Prober,Hash,KEqual>::resize()
 {
   // Check if we have anymore numbers in CAPACITIES
-  if(mIndex_ >= std::size(CAPACITIES)-1){
+  if(mIndex_ >= sizeof(CAPACITIES)/sizeof(CAPACITIES[0])-1){
     throw std::logic_error("No more capacity");
   }
 
