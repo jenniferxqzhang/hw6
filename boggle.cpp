@@ -96,4 +96,37 @@ bool boggleHelper(const std::set<std::string>& dict, const std::set<std::string>
 {
 //add your solution here!
 
+	// personal notes: make sure you are using backtracking
+
+	// check boundries of the board
+	if(c >= board.size()|| r>=board.size()){
+		return false;
+	}
+
+	// add letter to current string
+	std::string curr = word + board[r][c];
+	// initialize boolean
+	bool found = false;
+
+	// check if it is valid
+	if(prefix.find(curr) != prefix.end()){
+		// continue recursing
+		bool nextFound = boggleHelper(dict, prefix, board, curr, result, r+dr, c +dc, dr, dc);
+
+		if(dict.find(curr) != dict.end() && !nextFound){
+			result.insert(curr);
+			found = true;
+		}
+			return found || nextFound;
+	}
+	else {
+		// prefix is not valid, we do not need to keep recursing 
+		//check if it is a valid word
+		if(dict.find(curr) != dict.end()){
+			result.insert(curr);
+			return true;
+		}
+		return false;
+	}
+
 }
